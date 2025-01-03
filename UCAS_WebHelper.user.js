@@ -7,8 +7,6 @@
 // @match        https://ucas.smartclass.cn/UserSpace/CourseList.aspx
 // @match        https://ucas.smartclass.cn/PlayPages/*
 // @match        https://jwxk.ucas.ac.cn/evaluate/*
-// @grant        GM_registerMenuCommand
-// @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
 (function() {
