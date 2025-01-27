@@ -27,3 +27,5 @@
 下载UCAS_WebHelper.user.js文件，安装篡改猴（TampeMonkey），然后添加该脚本（可以在管理面板把脚本拖进去或者手动复制粘贴）。
 
 在评教页面以及智慧课堂的录播页面、观看视频页面、从sep进去的文献下载页面能看到按钮，点击即可使用功能，所见即所得。
+
+可以参考[我的博客](https://www.elpsylkf.work/p/ucas-web-helper/)，会更新一些图片说明。
