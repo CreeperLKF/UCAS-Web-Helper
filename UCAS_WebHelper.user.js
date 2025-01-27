@@ -1,16 +1,34 @@
 // ==UserScript==
 // @name         UCAS Web Helper
 // @namespace    https://www.elpsylkf.work/
-// @version      0.8
-// @description  Helper tools for UCAS web systems including fetching course video URL and course evaluation
+// @version      0.9
+// @description  Helper tools for UCAS websites
 // @author       LinearKF
 // @match        https://ucas.smartclass.cn/UserSpace/CourseList.aspx
 // @match        https://ucas.smartclass.cn/PlayPages/*
 // @match        https://jwxk.ucas.ac.cn/evaluate/*
+// @match        https://libyw.ucas.ac.cn/*
+// @require      https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js
 // ==/UserScript==
 
 (function() {
     'use strict';
+
+    // Add base62 encoding function
+    const base62Chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    function base62Encode(str) {
+        const bytes = new TextEncoder().encode(str);
+        let value = BigInt(0);
+        for (let i = 0; i < bytes.length; i++) {
+            value = value * BigInt(256) + BigInt(bytes[i]);
+        }
+        let result = '';
+        while (value > 0) {
+            result = base62Chars[Number(value % BigInt(62))] + result;
+            value = value / BigInt(62);
+        }
+        return result || '0';
+    }
 
     // Add styles
     const styles = document.createElement('style');
@@ -94,6 +112,42 @@
         }
         .copy-button:hover {
             background: #e5e5e5;
+        }
+        .url-input-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 400px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 10000;
+        }
+        .url-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .url-button {
+            padding: 8px 16px;
+            background: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+        .url-button:hover {
+            background: #0052a3;
+        }
+        .url-result {
+            margin-top: 10px;
+            word-break: break-all;
+            color: #0066cc;
         }
     `;
     document.head.appendChild(styles);
@@ -275,6 +329,72 @@
         document.getElementById("regfrm").submit();
     }
 
+    function transformLibraryUrl(url) {
+        try {
+            const urlObj = new URL(url);
+            const protocol = urlObj.protocol.replace(':', '');
+            if (protocol !== 'https') {
+                throw new Error('Protocol error');
+            }
+            const authority = urlObj.host + (urlObj.port ? ':' + urlObj.port : '');
+            const file = urlObj.pathname + urlObj.search + urlObj.hash;
+
+            const encodingInput = authority + '\n2\n' + CryptoJS.MD5(authority + "2GBSN!@!20240501-ucas").toString().substring(0, 8);
+            const encodedAuthority = base62Encode(encodingInput);
+
+            return `https://libyw.ucas.ac.cn/${protocol}/${encodedAuthority}${file}`;
+        } catch (e) {
+            console.error('URL transformation error:', e);
+            return null;
+        }
+    }
+
+    function handleLibraryPage() {
+        const container = document.createElement('div');
+        container.className = 'url-input-container';
+        container.style.display = 'none';
+        container.innerHTML = `
+            <input type="text" class="url-input" placeholder="请输入需要转换的URL">
+            <button class="url-button transform-btn">转换</button>
+            <button class="url-button close-btn">关闭</button>
+            <div class="url-result"></div>
+        `;
+
+        document.body.appendChild(container);
+
+        const input = container.querySelector('.url-input');
+        const result = container.querySelector('.url-result');
+        const transformBtn = container.querySelector('.transform-btn');
+        const closeBtn = container.querySelector('.close-btn');
+
+        transformBtn.addEventListener('click', () => {
+            const url = input.value.trim();
+            if (!url) {
+                alert('请输入URL');
+                return;
+            }
+
+            const transformedUrl = transformLibraryUrl(url);
+            if (transformedUrl) {
+                result.innerHTML = `
+                    <div style="margin-bottom: 8px;">转换结果：</div>
+                    <div style="margin-bottom: 8px;">${transformedUrl}</div>
+                    <button class="url-button" onclick="window.location.href='${transformedUrl}'">跳转</button>
+                    <button class="url-button" onclick="navigator.clipboard.writeText('${transformedUrl}')">复制</button>
+                `;
+            } else {
+                result.innerHTML = '<div style="color: red;">URL格式错误，请检查输入</div>';
+            }
+        });
+
+        closeBtn.addEventListener('click', () => {
+            container.style.display = 'none';
+            floatingButton.style.display = 'block';
+        });
+
+        return container;
+    }
+
     // Initialize appropriate features based on current page
     const currentUrl = window.location.href;
     let floatingButton;
@@ -285,5 +405,12 @@
     } else if (currentUrl.includes('jwxk.ucas.ac.cn/evaluate')) {
         // Create course selection submit button
         floatingButton = createButton(fillSubmitForm);
+    } else if (currentUrl.includes('libyw.ucas.ac.cn')) {
+        // Create library URL transform button
+        const libraryContainer = handleLibraryPage();
+        floatingButton = createButton(() => {
+            libraryContainer.style.display = 'block';
+            floatingButton.style.display = 'none';
+        });
     }
 })();
