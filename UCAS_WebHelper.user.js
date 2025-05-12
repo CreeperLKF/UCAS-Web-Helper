@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         UCAS Web Helper
 // @namespace    https://www.elpsylkf.work/
-// @version      0.9
+// @version      0.9.1
 // @description  Helper tools for UCAS websites
 // @author       LinearKF
 // @match        https://ucas.smartclass.cn/UserSpace/CourseList.aspx
 // @match        https://ucas.smartclass.cn/PlayPages/*
 // @match        https://jwxk.ucas.ac.cn/evaluate/*
+// @match        https://xkcts.ucas.ac.cn:8443/evaluate/*
 // @match        https://libyw.ucas.ac.cn/*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js
 // ==/UserScript==
@@ -402,7 +403,7 @@
     if (currentUrl.includes('ucas.smartclass.cn')) {
         // Create video URL transform button for video pages
         floatingButton = createButton(transformUrls);
-    } else if (currentUrl.includes('jwxk.ucas.ac.cn/evaluate')) {
+    } else if (currentUrl.includes('jwxk.ucas.ac.cn/evaluate') || currentUrl.includes('xkcts.ucas.ac.cn:8443/evaluate')) {
         // Create course selection submit button
         floatingButton = createButton(fillSubmitForm);
     } else if (currentUrl.includes('libyw.ucas.ac.cn')) {
